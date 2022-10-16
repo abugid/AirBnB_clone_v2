@@ -1,39 +1,30 @@
 #!/usr/bin/python3
 """
-Fabric script based on the file 1-pack_web_static.py that distributes an
-archive to the web servers
+script that distributes archive to webservers
 """
-
-from fabric.api import put, run, env
-from os.path import exists
-
-env.hosts = ["3.238.28.101", "3.209.82.116"]
+import os.path
+from fabric.api import *
+from fabric.operations import run, put, sudo
+env.hosts = ['104.196.56.190', '44.200.74.225']
 
 
 def do_deploy(archive_path):
-    """distributes an archive to the web servers"""
-    if exists(archive_path) is False:
-        print("False")
+    """ deploy """
+    if (os.path.isfile(archive_path) is False):
         return False
 
-    filename = archive_path.split("/")
-    filename = filename[1]
-    fname = filename.split(".")
-    fname = fname[0]
-
-    newpath = "/data/web_static/releases/{}/".format(fname)
-
     try:
+        new_comp = archive_path.split("/")[-1]
+        new_folder = ("/data/web_static/releases/" + new_comp.split(".")[0])
         put(archive_path, "/tmp/")
-        run("mkdir -p {}".format(newpath))
-        run("tar -xzf /tmp/{} -C {}".format(filename, newpath))
-        run("rm /tmp/{}".format(filename))
-        run("mv {}web_static/* {}".format(newpath, newpath))
-        run("rm -rf {}web_static".format(newpath))
-        run("rm -rf /data/web_static/current")
-        run("ln -s {} /data/web_static/current".format(newpath))
-        print("New version deployed!")
+        run("sudo mkdir -p {}".format(new_folder))
+        run("sudo tar -xzf /tmp/{} -C {}".
+            format(new_comp, new_folder))
+        run("sudo rm /tmp/{}".format(new_comp))
+        run("sudo mv {}/web_static/* {}/".format(new_folder, new_folder))
+        run("sudo rm -rf {}/web_static".format(new_folder))
+        run('sudo rm -rf /data/web_static/current')
+        run("sudo ln -s {} /data/web_static/current".format(new_folder))
         return True
-    except Exception:
-        print("False 2")
+    except:
         return False
